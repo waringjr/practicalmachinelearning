@@ -1,0 +1,63 @@
+---
+title: Coursera Dec 2014  Practical Machine Learning
+date: "Sunday, December 21, 2014"
+output: html_document
+---
+
+Both the test and training sets are initially read into r:
+
+```{r}
+library(randomForest)
+
+test<-read.csv("pml-testing.csv")
+train<-read.csv("pml-training.csv")
+
+dim(train)
+```
+
+First some data tidying.
+
+The first 7 columns are not quantitative data, therefore excluded.  Likewise
+all 'calculated' data (ie avg, kurtosis, max, min) is removed.  Just the 'raw' data remains:
+```{r}
+traindf1<-train[8:160]
+traindf2<-traindf1[,-grep(pattern='avg',x=colnames(traindf1))]
+traindf3<-traindf2[,-grep(pattern='max',x=colnames(traindf2))]
+traindf4<-traindf3[,-grep(pattern='min',x=colnames(traindf3))]
+traindf5<-traindf4[,-grep(pattern='stddev',x=colnames(traindf4))]
+traindf6<-traindf5[,-grep(pattern='skewness',x=colnames(traindf5))]
+traindf7<-traindf6[,-grep(pattern='kurtosis',x=colnames(traindf6))]
+traindf8<-traindf7[,-grep(pattern='accel',x=colnames(traindf7))]
+traindf9<-traindf8[,-grep(pattern='var',x=colnames(traindf8))]
+traindf10<-traindf9[,-grep(pattern='amplitude',x=colnames(traindf9))]
+dim(traindf10)
+```
+
+There are now 36 predictors and 1 outcome (classe).  Due to the large number of predictors, a random forest approach is selected.  
+
+```{r}
+fit<-randomForest(classe~.,data=traindf10,ntree=200,keep.forest=TRUE)
+```
+
+A fit is obtained, with an estimated out-of-bag error rate of 0.32%.  Now, the test set 
+must be manipulated analogously to the training set:
+
+```{r}
+testdf1<-test[8:160]
+testdf2<-testdf1[,-grep(pattern='avg',x=colnames(testdf1))]
+testdf3<-testdf2[,-grep(pattern='max',x=colnames(testdf2))]
+testdf4<-testdf3[,-grep(pattern='min',x=colnames(testdf3))]
+testdf5<-testdf4[,-grep(pattern='stddev',x=colnames(testdf4))]
+testdf6<-testdf5[,-grep(pattern='skewness',x=colnames(testdf5))]
+testdf7<-testdf6[,-grep(pattern='kurtosis',x=colnames(testdf6))]
+testdf8<-testdf7[,-grep(pattern='accel',x=colnames(testdf7))]
+testdf9<-testdf8[,-grep(pattern='var',x=colnames(testdf8))]
+testdf10<-testdf9[,-grep(pattern='amplitude',x=colnames(testdf9))]
+```
+Now that the test set is ready, a prediction can be made:
+
+```{r}
+pred<-predict(fit,newdata=testdf10)
+```
+
+
